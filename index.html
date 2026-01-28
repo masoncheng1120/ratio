@@ -89,7 +89,7 @@
                 </div>
             </button>
 
-            <!-- Application Card (NEW) -->
+            <!-- Application Card -->
             <button onclick="startQuiz('application')" class="menu-card glass-panel rounded-3xl p-8 shadow-xl border-t-4 border-emerald-500 text-left group relative overflow-hidden">
                 <div class="absolute top-0 right-0 p-4 opacity-5 group-hover:opacity-10 transition-opacity">
                     <svg class="w-24 h-24" fill="currentColor" viewBox="0 0 24 24"><path d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"></path></svg>
@@ -131,11 +131,9 @@
         <!-- Content -->
         <div class="p-6 md:p-8">
             <!-- Question Area -->
-            <!-- Modified to allow overflow handling and proper text wrap -->
             <div class="bg-white border border-slate-200 rounded-2xl p-8 mb-8 flex flex-col items-center justify-center min-h-[180px] text-center shadow-sm relative overflow-hidden">
                 <div class="absolute top-0 left-0 w-2 h-full bg-slate-100"></div> 
                 <div id="questionText" class="text-slate-500 mb-6 text-sm font-bold uppercase tracking-wide w-full text-center"></div>
-                <!-- Removed fixed text size, will be handled by JS -->
                 <div id="mathDisplay" class="w-full break-words whitespace-normal text-slate-800 font-medium tracking-tight leading-relaxed">
                     <!-- MathJax will render here -->
                 </div>
@@ -209,13 +207,11 @@
     const lcm = (a, b) => (a * b) / gcd(a, b);
     const pick = (arr) => arr[Math.floor(Math.random() * arr.length)];
     
-    // Helper to get simplest ratio string "a : b"
     const getSimplestRatio = (a, b) => {
         const div = gcd(a, b);
         return `${a/div} : ${b/div}`;
     };
 
-    // Helper to attach units to a ratio string "a : b" -> "a unit : b unit"
     const attachUnit = (ratioStr, unit) => {
         const [r1, r2] = ratioStr.split(' : ');
         return `${r1}\\text{ ${unit}} : ${r2}\\text{ ${unit}}`;
@@ -226,7 +222,6 @@
             const isUnitQuestion = Math.random() > 0.4;
             
             if (!isUnitQuestion) {
-                // Number only logic
                 const common = rand(2, 12);
                 const x = rand(1, 15);
                 let y = rand(1, 15);
@@ -245,7 +240,6 @@
                     ]
                 };
             } else {
-                // Unit logic
                 const units = [
                     { name: 'm', sub: 'cm', factor: 100 },
                     { name: 'cm', sub: 'mm', factor: 10 },
@@ -281,7 +275,6 @@
                     rawVal2 = smallVal;
                 }
                 
-                // Base Numerical Answers (Simplified)
                 const numCorrect = getSimplestRatio(rawVal1, rawVal2);
                 const numW1 = getSimplestRatio(val1, val2); 
                 const numW2 = getSimplestRatio(rawVal2, rawVal1); 
@@ -320,7 +313,8 @@
             const w2 = `${x} : ${y*u} : ${v}`;
             const w3 = `${finalA} : ${Math.floor((y+u)/2)} : ${finalC}`;
             
-            const qTex = `\\text{If } a:b = ${x}:${y} \\text{ and } b:c = ${u}:${v}, \\\\ \\text{find } a:b:c.`;
+            // Used array environment to force vertical separation
+            const qTex = `\\begin{array}{c} \\text{Given } a:b = ${x}:${y} \\text{ and } b:c = ${u}:${v} \\\\[1em] \\text{Find } a:b:c \\end{array}`;
 
             return {
                 q: "Find the combined ratio:",
@@ -330,13 +324,12 @@
             };
         },
 
-        // NEW: Application Generator
+        // Application Generator
         application: () => {
-            // Types: 0=Allocation, 1=Changes(Pies/Flowers), 2=Map, 3=Revenue
-            const type = Math.floor(Math.random() * 4);
+            const type = Math.floor(Math.random() * 6);
             
             if (type === 0) {
-                // ALLOCATION (Ribbon/Money)
+                // ALLOCATION
                 const contexts = [
                     { name: 'piece of ribbon', unit: 'm', action: 'cut into', subject: 'piece' },
                     { name: 'sum of money', unit: '$', action: 'divided in', subject: 'share' },
@@ -344,46 +337,39 @@
                 ];
                 const ctx = pick(contexts);
                 
-                // 3 parts ratio a:b:c
                 const a = rand(2, 6);
                 const b = rand(2, 6);
                 const c = rand(2, 6);
                 const totalParts = a + b + c;
                 
-                // Pick a multiplier so Total is nice
-                const k = rand(2, 12) * (ctx.unit === 'm' ? 0.5 : 10); // make ribbon decimals possible, money large
+                const k = rand(2, 12) * (ctx.unit === 'm' ? 0.5 : 10);
                 const Total = totalParts * k;
                 
-                // Logic: Find Largest or Smallest
                 const findLargest = Math.random() > 0.5;
                 const targetPart = findLargest ? Math.max(a, b, c) : Math.min(a, b, c);
                 const ans = targetPart * k;
                 const adjective = findLargest ? (ctx.unit === 'm' ? 'longest' : 'largest') : (ctx.unit === 'm' ? 'shortest' : 'smallest');
                 
-                // Format Total (remove trailing zeros if needed)
                 const totalStr = parseFloat(Total.toFixed(1));
                 const ansStr = parseFloat(ans.toFixed(1));
                 
-                // Helper to place unit correctly ($ at front, others at back)
                 const fmt = (val, u) => u === '$' ? `$${val}` : `${val} ${u}`;
 
-                // Elegant phrasing with line breaks
                 const qText = `A ${ctx.name} is ${fmt(totalStr, ctx.unit)}.<br><br>It is ${ctx.action} the ratio ${a} : ${b} : ${c}.<br><br>Find the value of the ${adjective} ${ctx.subject}.`;
                 
-                // Distractors
                 const w1 = parseFloat(((findLargest ? Math.min(a,b,c) : Math.max(a,b,c)) * k).toFixed(1));
-                const w2 = parseFloat((Total / 3).toFixed(1)); // Average
+                const w2 = parseFloat((Total / 3).toFixed(1)); 
                 const w3 = parseFloat(((targetPart + 1) * k).toFixed(1));
 
                 return {
                     q: "Word Problem:",
-                    tex: qText, // Just HTML, no \text{}
+                    tex: qText,
                     correct: fmt(ansStr, ctx.unit),
                     distractors: [fmt(w1, ctx.unit), fmt(w2, ctx.unit), fmt(w3, ctx.unit)]
                 };
             } 
             else if (type === 1) {
-                // CHANGES (Pies/Flowers)
+                // CHANGES
                 const isPies = Math.random() > 0.5;
                 let qText, correct, dists;
                 
@@ -426,7 +412,7 @@
                     const realDistM = mapDist * scaleK * 100; // in meters
                     const n = scaleK * 10000;
                     
-                    const qText = `On a map, a length of ${mapDist} cm represents an actual distance of ${realDistM} m.<br><br>Find the scale of the map.`;
+                    const qText = `On a map, a length of ${mapDist} cm represents an actual distance of ${realDistM} m.<br><br>Find the scale of the map.<br><br><span class="text-xs text-gray-500 font-normal">(Hint: 1 km = 100,000 cm)</span>`;
                     
                     return {
                         q: "Map Scale:",
@@ -438,7 +424,7 @@
                     const n = pick([5000, 10000, 20000, 50000]); 
                     const newMapDist = rand(4, 12) + (Math.random() > 0.5 ? 0.5 : 0);
                     const actualKm = (newMapDist * n) / 100000;
-                    const qText = `The scale of a map is 1 : ${n}.<br><br>If a river is ${newMapDist} cm long on the map, find its actual length in km.`;
+                    const qText = `The scale of a map is 1 : ${n}.<br><br>If a river is ${newMapDist} cm long on the map, find its actual length in km.<br><br><span class="text-xs text-gray-500 font-normal">(Hint: 1 km = 100,000 cm)</span>`;
                     
                     return {
                         q: "Map Scale:",
@@ -448,7 +434,7 @@
                     };
                 }
             }
-            else {
+            else if (type === 3) {
                 // REVENUE / TICKETS
                 const p1 = 1000 * rand(2, 8);
                 const p2 = 500 * rand(3, 9);
@@ -467,6 +453,40 @@
                     tex: qText,
                     correct: `${totalTickets}`,
                     distractors: [`${totalTickets - k*r3}`, `${totalTickets + k}`, `${Math.floor(totalTickets * 1.5)}`]
+                };
+            }
+            else if (type === 4) {
+                // NEW: Algebraic ka = mb
+                let k = rand(2, 5);
+                let m = rand(2, 5);
+                while (k === m) m = rand(2, 5);
+                
+                // Fixed formatting to mix HTML with MathJax delimiters
+                const qText = `Given that:<br>$$${k}a = ${m}b$$<br>Find the ratio \\( a : b \\).`;
+                const correct = getSimplestRatio(m, k);
+                
+                return {
+                    q: "Algebraic Ratio:",
+                    tex: qText,
+                    correct: correct,
+                    distractors: [getSimplestRatio(k, m), getSimplestRatio(k, k+m), getSimplestRatio(m, k+m)]
+                };
+            }
+            else {
+                // NEW: Algebraic a/k = b/m
+                let k = rand(3, 9);
+                let m = rand(3, 9);
+                while (k === m) m = rand(3, 9);
+                
+                // Fixed formatting to mix HTML with MathJax delimiters
+                const qText = `Given that:<br>$$ \\frac{a}{${k}} = \\frac{b}{${m}} $$<br>Find the ratio \\( a : b \\).`;
+                const correct = getSimplestRatio(k, m);
+                
+                return {
+                    q: "Algebraic Ratio:",
+                    tex: qText,
+                    correct: correct,
+                    distractors: [getSimplestRatio(m, k), getSimplestRatio(k, k+m), getSimplestRatio(1, k*m)]
                 };
             }
         }
@@ -582,7 +602,6 @@
         document.getElementById('feedbackArea').classList.remove('animate-pulse');
         const nextBtn = document.getElementById('nextBtn');
         
-        // Reset button color based on topic logic would be complex, simpler to use slate for neutral
         nextBtn.classList.remove('bg-green-600', 'hover:bg-green-700', 'shadow-green-300');
         nextBtn.classList.add('bg-slate-800', 'hover:bg-slate-900');
         nextBtn.innerHTML = `<span>${state.questionCount === state.maxQuestions ? 'Finish' : 'Skip / Next'}</span><svg class="w-5 h-5" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M10.293 3.293a1 1 0 011.414 0l6 6a1 1 0 010 1.414l-6 6a1 1 0 01-1.414-1.414L14.586 11H3a1 1 0 110-2h11.586l-4.293-4.293a1 1 0 010-1.414z" clip-rule="evenodd" /></svg>`;
