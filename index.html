@@ -58,7 +58,7 @@
             </div>
         </div>
 
-        <div class="grid grid-cols-1 md:grid-cols-3 gap-6 px-4">
+        <div class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-6 px-4">
             <!-- Simplify Card -->
             <button onclick="startQuiz('simplify')" class="menu-card glass-panel rounded-3xl p-8 shadow-xl border-t-4 border-indigo-500 text-left group relative overflow-hidden">
                 <div class="absolute top-0 right-0 p-4 opacity-5 group-hover:opacity-10 transition-opacity">
@@ -85,6 +85,21 @@
                 <h2 class="text-xl font-bold text-slate-800 mb-2">Combined Ratios</h2>
                 <p class="text-slate-500 text-sm mb-4 leading-relaxed">Linking ratios like A:B and B:C to find A:B:C.</p>
                 <div class="flex items-center text-pink-600 font-bold text-sm group-hover:translate-x-2 transition-transform">
+                    Start <svg class="w-4 h-4 ml-1" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 8l4 4m0 0l-4 4m4-4H3"></path></svg>
+                </div>
+            </button>
+
+            <!-- Three Parts Card -->
+            <button onclick="startQuiz('threeParts')" class="menu-card glass-panel rounded-3xl p-8 shadow-xl border-t-4 border-orange-500 text-left group relative overflow-hidden">
+                <div class="absolute top-0 right-0 p-4 opacity-5 group-hover:opacity-10 transition-opacity">
+                    <svg class="w-24 h-24" fill="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"></path></svg>
+                </div>
+                <div class="w-12 h-12 bg-orange-100 rounded-2xl flex items-center justify-center mb-6 group-hover:bg-orange-600 transition-colors shadow-sm">
+                    <svg class="w-6 h-6 text-orange-600 group-hover:text-white transition-colors" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"></path></svg>
+                </div>
+                <h2 class="text-xl font-bold text-slate-800 mb-2">Three Parts</h2>
+                <p class="text-slate-500 text-sm mb-4 leading-relaxed">Simplifying 3-term ratios like 2:4:8 or fractions.</p>
+                <div class="flex items-center text-orange-600 font-bold text-sm group-hover:translate-x-2 transition-transform">
                     Start <svg class="w-4 h-4 ml-1" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 8l4 4m0 0l-4 4m4-4H3"></path></svg>
                 </div>
             </button>
@@ -489,6 +504,82 @@
                     distractors: [getSimplestRatio(m, k), getSimplestRatio(k, k+m), getSimplestRatio(1, k*m)]
                 };
             }
+        },
+        
+        // 3-PART RATIO GENERATOR
+        threeParts: () => {
+            const isFraction = Math.random() > 0.5;
+            
+            if (!isFraction) {
+                // Integer Type: k*a : k*b : k*c
+                const k = rand(2, 6);
+                let a = rand(1, 8);
+                let b = rand(1, 8);
+                while (b === a) b = rand(1, 8);
+                let c = rand(1, 8);
+                while (c === a || c === b) c = rand(1, 8);
+
+                const rawA = a * k;
+                const rawB = b * k;
+                const rawC = c * k;
+                
+                // Calculate correct simplest form
+                const div = gcd(rawA, gcd(rawB, rawC));
+                const sa = rawA/div;
+                const sb = rawB/div;
+                const sc = rawC/div;
+                
+                const correct = `${sa} : ${sb} : ${sc}`;
+                
+                return {
+                    q: "Simplify the ratio:",
+                    tex: `${rawA} : ${rawB} : ${rawC}`,
+                    correct: correct,
+                    distractors: [
+                        `${sa} : ${sb+1} : ${sc}`,
+                        `${sc} : ${sb} : ${sa}`,
+                        `${sa} : ${sb} : ${sc+2}`
+                    ]
+                };
+            } else {
+                // Fraction Type: n1/d1 : n2/d2 : n3/d3
+                const denoms = [2, 3, 4, 5, 6, 8, 10];
+                
+                const makeFrac = () => {
+                    let d = pick(denoms);
+                    let n = rand(1, 5); // Random numerator 1-5
+                    return {n, d};
+                };
+
+                let f1 = makeFrac();
+                let f2 = makeFrac();
+                let f3 = makeFrac();
+
+                // Calculate LCM of denominators
+                const common = lcm(f1.d, lcm(f2.d, f3.d));
+                
+                // Convert to integers
+                let val1 = f1.n * (common / f1.d);
+                let val2 = f2.n * (common / f2.d);
+                let val3 = f3.n * (common / f3.d);
+                
+                // Simplify integer result
+                const div = gcd(val1, gcd(val2, val3));
+                val1 /= div; val2 /= div; val3 /= div;
+                
+                const correct = `${val1} : ${val2} : ${val3}`;
+                
+                return {
+                    q: "Simplify the fraction ratio:",
+                    tex: `\\frac{${f1.n}}{${f1.d}} : \\frac{${f2.n}}{${f2.d}} : \\frac{${f3.n}}{${f3.d}}`,
+                    correct: correct,
+                    distractors: [
+                        `${f1.d} : ${f2.d} : ${f3.d}`,
+                        `${val3} : ${val2} : ${val1}`,
+                        `${val1} : ${val2+1} : ${val3}`
+                    ]
+                };
+            }
         }
     };
 
@@ -544,10 +635,15 @@
             header.className = 'bg-pink-600 p-5 text-white flex justify-between items-center shadow-md transition-colors duration-300';
             title.textContent = "Combined Ratios";
             subtitle.textContent = "Linking two ratios";
-        } else {
+        } else if (topic === 'application') {
             header.className = 'bg-emerald-600 p-5 text-white flex justify-between items-center shadow-md transition-colors duration-300';
             title.textContent = "Application";
             subtitle.textContent = "Word Problems & Scales";
+        } else {
+            // Three Parts styling (Orange)
+            header.className = 'bg-orange-500 p-5 text-white flex justify-between items-center shadow-md transition-colors duration-300';
+            title.textContent = "Three Parts Ratio";
+            subtitle.textContent = "Simplifying A:B:C";
         }
 
         document.getElementById('menuView').classList.add('hidden');
@@ -640,6 +736,7 @@
             let hoverClass = 'hover:border-indigo-400';
             if (state.currentTopic === 'combined') hoverClass = 'hover:border-pink-400';
             if (state.currentTopic === 'application') hoverClass = 'hover:border-emerald-400';
+            if (state.currentTopic === 'threeParts') hoverClass = 'hover:border-orange-400';
             
             btn.className = `option-btn w-full bg-white border-2 border-slate-100 ${hoverClass} p-5 rounded-2xl text-lg font-medium text-slate-700 focus:outline-none relative overflow-hidden shadow-sm hover:shadow-md`;
             btn.innerHTML = `$$${optText}$$`;
